@@ -21,6 +21,7 @@ def testPruning():
   ID3.prune(tree, validationData)
   if tree != None:
     ans = ID3.evaluate(tree, dict(a=0, b=0, c=1, d=0))
+    #print(ans)
     if ans != 1:
       print("pruning test failed.")
     else:
@@ -91,3 +92,8 @@ def testPruningOnHouseData(inFile):
   print(withoutPruning)
   print("average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning))
   
+
+testID3AndEvaluate()
+testPruning()
+testID3AndTest()
+testPruningOnHouseData('house_votes_84.data')
