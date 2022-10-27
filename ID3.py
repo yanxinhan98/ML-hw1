@@ -28,8 +28,6 @@ def entropy(examples):
     return -total_entropy
 
 # calculate the information gain of an attribute to the given examples
-
-
 def info_gain(examples, attr):
 
     total_gain = entropy(examples)
@@ -55,22 +53,29 @@ def ID3(examples, default):
     and the target class variable is a special attribute with the name "Class".
     Any missing attributes are denoted with a value of "?"
     '''
+    # assign the default class value to the global variable
     global default_class
     default_class = default
     
+    # preprocess examples to fill in missing attributes 
     process_example(examples)
+    
+    # store attribute name as a list(without Class)
     feat = [k for k in examples[0].keys()]
     feat.remove('Class')
 
+    # fill in missing class value with default class value 
     for row in examples:
         if row['Class'] == '?':
             row['Class'] == default
-
+    
+    # call ID3 helper functions, pass in attribute list for spliting 
     return ID3_helper(examples, feat, default)
 
-
+# ID3 helper funcion, return a trained tree 
 def ID3_helper(examples, attributes, default):
-
+    
+    # initialize final tree for return 
     root = Node()
 
     max_gain = 0
@@ -84,8 +89,8 @@ def ID3_helper(examples, attributes, default):
             max_f = f
 
     # No attribute has positive information gain
-    # find the attribute with most unique values and split the data using it
-    # if only one attribute left, label the data with the most commmon class
+    # find the attribute with most unique values and make it the next attribute for spliting 
+    # if only one attribute left, label the data with the most commmon class and return 
     if max_gain == 0:
         if len(attributes) > 1:
             len_attr = 1
@@ -99,11 +104,12 @@ def ID3_helper(examples, attributes, default):
         else:
             root.label = mode(examples, 'Class')
             return root
-
+    
     if max_f == '':
       root.label = mode(examples, 'Class')
       return root 
-    # find all distinct values for this attribute
+    
+    # find and sotre all distinct values for this attribute
     root.attr = max_f
     unique_v = set()
     for row in examples:
@@ -117,7 +123,7 @@ def ID3_helper(examples, attributes, default):
                 cur_ex.append(row)
         sub_e = entropy(cur_ex)
 
-        # if all data have the same class
+        # if all data have the same class, we find a leaf 
         if sub_e == 0:
             newnode = Node()
             newnode.attr = v
@@ -125,7 +131,8 @@ def ID3_helper(examples, attributes, default):
             newnode.label = cur_ex[0]['Class'] if len(
                 cur_ex) > 0 else mode(examples, 'Class')
             root.children[v] = newnode
-        # if not, continue to split
+        
+        # if not, continue to split, store the child node 
         else:
             cur_attr = attributes.copy()
             cur_attr.remove(max_f)
@@ -133,7 +140,8 @@ def ID3_helper(examples, attributes, default):
             root.children[v] = child
     return root
 
-
+# Reduced error pruning
+# Prune the subtrees which have less accuracy comparing to a leaf node with common class value as its label 
 def prune(node, examples):
     '''
     Takes in a trained tree and a validation set of examples.  Prunes nodes in order
@@ -185,6 +193,7 @@ def test(node, examples):
     Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
     of examples the tree classifies correctly).
     '''
+    # fill in the missing attribute value
     process_example(examples)
     
     total = len(examples)
@@ -202,14 +211,16 @@ def evaluate(node, example):
     Takes in a tree and one example.  Returns the Class value that the tree
     assigns to the example.
     '''
-
+    
+    # explore down the tree using example's attributes until the tree reaches a node with lable 
     while node.label is None:
         cur_attr = node.attr
         ex_v = example[cur_attr]
         node = node.children[ex_v]
     return node.label
 
-
+# find out the mode value of the attribute from the examples 
+# if there are no examples, return the default class value 
 def mode(examples, attr):
     attr_num = {}
     for row in examples:
@@ -221,6 +232,7 @@ def mode(examples, attr):
     return max(attr_num, key=attr_num.get) if len(examples) > 0 else default_class
 
 
+# preprocess examples by fill in missing attribute values with the most common attribute value(mode)
 def process_example(examples):
     feat = [k for k in examples[0].keys()]
     feat_mode = {}
